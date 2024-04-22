@@ -31,6 +31,7 @@ class TransformerBlock:
             q.scaled_dot_product_attention(k, v)
             .transpose(1, 2)
             .reshape(bsz, -1, self.num_heads * self.head_dim)
+            .linear(self.head_out)
         )
 
     def mlp(self, x):
@@ -52,11 +53,6 @@ class GPT:
 
         self.tok_embed = Tensor.scaled_uniform(vocab_size, embed_dim)
         self.pos_embed = Tensor.scaled_uniform(context_length, embed_dim)
-        self.pos = (
-            Tensor.arange(context_length)
-            .one_hot(self.context_length)
-            .cast(dtypes.float)
-        )
 
         self.blocks = [
             TransformerBlock(embed_dim, embed_dim // num_heads, num_heads)
@@ -68,7 +64,12 @@ class GPT:
     def __call__(self, x):
         # input shape (B,T,C)
         bsz = x.shape[0]
-        pos = self.pos[: x.shape[1]].expand((bsz, None, None))
+        pos = (
+            Tensor.arange(self.context_length)
+            .one_hot(self.context_length)
+            .cast(dtypes.float)[: x.shape[1]]
+            .expand((bsz, None, None))
+        )
         x = x.one_hot(self.vocab_size).linear(self.tok_embed) + pos.linear(
             self.pos_embed
         )

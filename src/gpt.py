@@ -59,7 +59,7 @@ class GPT:
             for _ in range(num_layers)
         ]
 
-        self.out = Tensor.scaled_uniform(embed_dim, vocab_size)
+        self.out = Tensor.scaled_uniform(embed_dim, vocab_size-1)
 
     def __call__(self, x):
         # input shape (B,T,C)

@@ -1,4 +1,5 @@
 from tinygrad import Tensor, dtypes
+from math import prod
 
 
 # returns x_train,y_train,x_test,y_test
@@ -7,15 +8,14 @@ def make_dataset(train_test_ratio, mod):
     # each have shape 12769
 
     # [ [0,1,2,..,mod,0,1,2,...mod] ] mod times
-    a = Tensor.arange(mod).repeat((mod, 1)).flatten(0, -1).unsqueeze(0)
+    a = Tensor.arange(mod, dtype=dtypes.int).repeat((mod, 1)).flatten(0, -1).unsqueeze(0)
     # [ [0,0,0,...,1,1,1,...,112,112,112] ]
-    b = Tensor.arange(mod).unsqueeze(-1).repeat((1, mod)).flatten(0, -1).unsqueeze(0)
+    b = Tensor.arange(mod,dtype=dtypes.int).unsqueeze(-1).repeat((1, mod)).flatten(0, -1).unsqueeze(0)
     # [ [113, 113, 113,...,113, 113] ]
     equals = Tensor.full((ds_len), mod).unsqueeze(0)
-
-    floor_div = (a + b / Tensor(mod)).floor()
-    product = floor_div * Tensor(mod)
-    targets = ((a + b) - product).T
+    sum = a+b
+    products = sum.div(mod).floor() * mod
+    targets = sum - products
 
     ds = a.cat(b, equals, dim=0).T
 
@@ -26,8 +26,9 @@ def make_dataset(train_test_ratio, mod):
     )
 
     ds_shuffled = ds[indices].cast(dtypes.float)
-    targets_shuffled = targets[indices].cast(dtypes.float)
+    targets_shuffled = targets[:,indices].cast(dtypes.float).reshape(prod(targets.shape),1)
 
+    # print(ds_shuffled.numpy(), f"{targets_shuffled.numpy()=}")
     train_cutoff = int(train_test_ratio * ds_len)
 
     return (
@@ -43,3 +44,5 @@ def batched_iterator(x, y, batch_size):
     for start in range(0, dataset_size, batch_size):
         end = start + batch_size
         yield (x[start:end], y[start:end])
+
+x_train, y_train, x_test, y_test = make_dataset(.3, 113)

@@ -1,5 +1,4 @@
 from tinygrad import Tensor, dtypes
-from tinygrad.nn.state import get_parameters
 
 # TODO: What type of positional embedding does Nanda use?
 
@@ -10,14 +9,14 @@ class TransformerBlock:
         self.head_dim = head_dim
         self.num_heads = num_heads
 
-        self.q = Tensor.scaled_uniform(embed_dim, embed_dim)
-        self.k = Tensor.scaled_uniform(embed_dim, embed_dim)
-        self.v = Tensor.scaled_uniform(embed_dim, embed_dim)
+        self.q = Tensor.normal(embed_dim, embed_dim)
+        self.k = Tensor.normal(embed_dim, embed_dim)
+        self.v = Tensor.normal(embed_dim, embed_dim)
 
-        self.head_out = Tensor.scaled_uniform(num_heads * head_dim, embed_dim)
+        self.head_out = Tensor.normal(num_heads * head_dim, embed_dim)
 
-        self.ff1 = Tensor.scaled_uniform(embed_dim, 4 * embed_dim)
-        self.ff2 = Tensor.scaled_uniform(4 * embed_dim, embed_dim)
+        self.ff1 = Tensor.normal(embed_dim, 4 * embed_dim)
+        self.ff2 = Tensor.normal(4 * embed_dim, embed_dim)
 
     def attn(self, x):
         bsz = x.shape[0]
@@ -51,15 +50,15 @@ class GPT:
         self.context_length = context_length
         self.num_heads = num_heads
 
-        self.tok_embed = Tensor.scaled_uniform(vocab_size, embed_dim)
-        self.pos_embed = Tensor.scaled_uniform(context_length, embed_dim)
+        self.tok_embed = Tensor.normal(vocab_size, embed_dim)
+        self.pos_embed = Tensor.normal(context_length, embed_dim)
 
         self.blocks = [
             TransformerBlock(embed_dim, embed_dim // num_heads, num_heads)
             for _ in range(num_layers)
         ]
 
-        self.out = Tensor.scaled_uniform(embed_dim, vocab_size-1)
+        self.out = Tensor.normal(embed_dim, vocab_size - 1)
 
     def __call__(self, x):
         # input shape (B,T,C)
